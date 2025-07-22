@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screener Widget</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            color: #334155;
+        }
+        
+        .widget-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .widget-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .widget-icon {
+            width: 32px;
+            height: 32px;
+            background: #2563eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .widget-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .tag {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .score-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .score-fill {
+            background: linear-gradient(90deg, #10b981, #059669);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .score-text {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <div class="widget-icon">AI</div>
+            <div class="widget-title">Resume Analysis</div>
+        </div>
+        
+        <div id="loading-state" class="loading">
+            <div class="spinner"></div>
+            <div>Analyzing resume with AI...</div>
+        </div>
+        
+        <div id="analysis-results" style="display: none;">
+            <div class="analysis-section">
+                <div class="section-title">Skills Detected</div>
+                <div class="tags-container" id="skills-tags">
+                    <!-- Skills will be populated here -->
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <div class="section-title">Experience Level</div>
+                <div class="tags-container" id="experience-tags">
+                    <!-- Experience tags will be populated here -->
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <div class="section-title">Match Score</div>
+                <div class="score-bar">
+                    <div class="score-fill" id="score-fill" style="width: 0%"></div>
+                </div>
+                <div class="score-text" id="score-text">Calculating...</div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="add-to-keka">Add to Keka</button>
+                <button class="btn btn-secondary" id="view-details">View Details</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simulate AI analysis
+        setTimeout(() => {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('analysis-results').style.display = 'block';
+            
+            // Populate skills
+            const skills = ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'];
+            const skillsContainer = document.getElementById('skills-tags');
+            skills.forEach(skill => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.textContent = skill;
+                skillsContainer.appendChild(tag);
+            });
+            
+            // Populate experience
+            const experienceContainer = document.getElementById('experience-tags');
+            const expTag = document.createElement('div');
+            expTag.className = 'tag';
+            expTag.textContent = '3-5 Years';
+            experienceContainer.appendChild(expTag);
+            
+            // Animate score
+            const scoreFill = document.getElementById('score-fill');
+            const scoreText = document.getElementById('score-text');
+            let score = 0;
+            const targetScore = 85;
+            
+            const animateScore = () => {
+                if (score < targetScore) {
+                    score += 2;
+                    scoreFill.style.width = score + '%';
+                    scoreText.textContent = `${score}% match`;
+                    requestAnimationFrame(animateScore);
+                }
+            };
+            
+            animateScore();
+            
+        }, 2000);
+        
+        // Button handlers
+        document.getElementById('add-to-keka').addEventListener('click', () => {
+            // Send message to content script
+            window.parent.postMessage({
+                type: 'ADD_TO_KEKA',
+                data: {
+                    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'],
+                    experience: '3-5 Years',
+                    score: 85
+                }
+            }, '*');
+        });
+        
+        document.getElementById('view-details').addEventListener('click', () => {
+            window.parent.postMessage({
+                type: 'VIEW_DETAILS'
+            }, '*');
+        });
+    </script>
+</body>
+</html>

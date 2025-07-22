@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas16" width="16" height="16" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    <canvas id="canvas48" width="48" height="48" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    
+    <div>
+        <a id="download16" download="icon16.png">Download 16x16</a><br>
+        <a id="download48" download="icon48.png">Download 48x48</a><br>
+        <a id="download128" download="icon128.png">Download 128x128</a>
+    </div>
+
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#2563EB');
+            gradient.addColorStop(1, '#1D4ED8');
+            
+            // Background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Robot head
+            const headSize = size * 0.5;
+            const headX = size * 0.25;
+            const headY = size * 0.22;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(headX, headY, headSize, headSize * 0.75);
+            
+            // Eyes
+            const eyeSize = size * 0.08;
+            const eyeY = headY + headSize * 0.25;
+            
+            ctx.fillStyle = '#2563EB';
+            ctx.beginPath();
+            ctx.arc(headX + headSize * 0.25, eyeY, eyeSize, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(headX + headSize * 0.75, eyeY, eyeSize, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Mouth
+            ctx.fillStyle = '#10B981';
+            ctx.fillRect(headX + headSize * 0.2, headY + headSize * 0.55, headSize * 0.6, headSize * 0.15);
+            
+            // Antenna
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.02;
+            ctx.beginPath();
+            ctx.moveTo(size/2, headY);
+            ctx.lineTo(size/2, headY - size * 0.1);
+            ctx.stroke();
+            
+            // Antenna tip
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(size/2, headY - size * 0.12, size * 0.03, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        // Create icons
+        createIcon(document.getElementById('canvas16'), 16);
+        createIcon(document.getElementById('canvas48'), 48);
+        createIcon(document.getElementById('canvas128'), 128);
+        
+        // Setup download links
+        document.getElementById('download16').href = document.getElementById('canvas16').toDataURL();
+        document.getElementById('download48').href = document.getElementById('canvas48').toDataURL();
+        document.getElementById('download128').href = document.getElementById('canvas128').toDataURL();
+    </script>
+</body>
+</html>

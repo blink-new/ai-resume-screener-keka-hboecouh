@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screener Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .candidate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .candidate-table th,
+        .candidate-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .candidate-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI Resume Screener Extension Test</h1>
+    
+    <div class="test-section">
+        <h2>Extension Status</h2>
+        <div id="extension-status" class="status">Checking extension...</div>
+        <button class="test-button" onclick="checkExtension()">Check Extension</button>
+        <button class="test-button" onclick="testAPIKey()">Test API Key</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Mock Keka Candidate Table</h2>
+        <p>This simulates a Keka candidates page. Select candidates and test the AI screening:</p>
+        
+        <table class="candidate-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Candidate</th>
+                    <th>Applied/Added On</th>
+                    <th>Tags</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" class="candidate-checkbox"></td>
+                    <td>John Smith</td>
+                    <td>20 Jul 2025</td>
+                    <td>JavaScript, React, Node.js</td>
+                    <td>john.smith@email.com</td>
+                    <td>+1 234 567 8900</td>
+                    <td>
+                        <button class="test-button" onclick="viewCandidate('John Smith')">View</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="candidate-checkbox"></td>
+                    <td>Sarah Johnson</td>
+                    <td>19 Jul 2025</td>
+                    <td>Python, Django, Machine Learning</td>
+                    <td>sarah.johnson@email.com</td>
+                    <td>+1 234 567 8901</td>
+                    <td>
+                        <button class="test-button" onclick="viewCandidate('Sarah Johnson')">View</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="candidate-checkbox"></td>
+                    <td>Mike Chen</td>
+                    <td>18 Jul 2025</td>
+                    <td>Java, Spring Boot, AWS</td>
+                    <td>mike.chen@email.com</td>
+                    <td>+1 234 567 8902</td>
+                    <td>
+                        <button class="test-button" onclick="viewCandidate('Mike Chen')">View</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin: 20px 0;">
+            <button class="test-button" onclick="testSingleScreening()">🤖 Test Single Screening</button>
+            <button class="test-button" onclick="testBulkScreening()">📊 Test Bulk Screening</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Test functions
+        function checkExtension() {
+            const status = document.getElementById('extension-status');
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+                status.className = 'status success';
+                status.textContent = '✅ Extension is loaded and active';
+                
+                // Check if content script is injected
+                if (window.kekaScreener) {
+                    status.textContent += ' - Content script ready';
+                } else {
+                    status.textContent += ' - Content script not detected';
+                }
+            } else {
+                status.className = 'status error';
+                status.textContent = '❌ Extension not detected. Please install and enable the extension.';
+            }
+        }
+
+        function testAPIKey() {
+            chrome.storage.sync.get(['openaiApiKey'], (result) => {
+                const status = document.getElementById('extension-status');
+                if (result.openaiApiKey) {
+                    status.className = 'status success';
+                    status.textContent = '✅ API Key is configured';
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ API Key not configured. Please set up your OpenAI API key.';
+                }
+            });
+        }
+
+        function testSingleScreening() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing single candidate screening...</p>';
+            
+            // Select first candidate
+            const firstCheckbox = document.querySelector('.candidate-checkbox');
+            firstCheckbox.checked = true;
+            
+            // Trigger AI screening if extension is available
+            if (window.kekaScreener) {
+                window.kekaScreener.performAIScreening()
+                    .then(() => {
+                        results.innerHTML = '<div class="status success">✅ Single screening test completed!</div>';
+                    })
+                    .catch(error => {
+                        results.innerHTML = `<div class="status error">❌ Single screening failed: ${error.message}</div>`;
+                    });
+            } else {
+                results.innerHTML = '<div class="status error">❌ Extension content script not available</div>';
+            }
+        }
+
+        function testBulkScreening() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing bulk candidate screening...</p>';
+            
+            // Select all candidates
+            const checkboxes = document.querySelectorAll('.candidate-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+            
+            // Trigger bulk AI screening if extension is available
+            if (window.kekaScreener) {
+                window.kekaScreener.performBulkScreening()
+                    .then(() => {
+                        results.innerHTML = '<div class="status success">✅ Bulk screening test completed!</div>';
+                    })
+                    .catch(error => {
+                        results.innerHTML = `<div class="status error">❌ Bulk screening failed: ${error.message}</div>`;
+                    });
+            } else {
+                results.innerHTML = '<div class="status error">❌ Extension content script not available</div>';
+            }
+        }
+
+        function viewCandidate(name) {
+            alert(`Viewing candidate: ${name}\n\nIn a real Keka system, this would open the candidate's detailed profile page.`);
+        }
+
+        // Select all functionality
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.candidate-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        // Auto-check extension status on load
+        window.addEventListener('load', () => {
+            setTimeout(checkExtension, 1000);
+        });
+    </script>
+</body>
+</html>

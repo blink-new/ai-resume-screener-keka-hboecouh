@@ -11,13 +11,17 @@
   "host_permissions": [
     "https://*.keka.com/*",
     "https://*.kekacloud.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "http://localhost/*",
+    "file:///*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://*.keka.com/*",
-        "https://*.kekacloud.com/*"
+        "https://*.kekacloud.com/*",
+        "http://localhost/*",
+        "file:///*"
       ],
       "js": ["content-ai-bridge.js"],
       "css": ["styles.css"]

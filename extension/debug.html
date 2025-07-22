@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Screener Extension Debug</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2563EB;
+      margin-bottom: 10px;
+    }
+    .status {
+      padding: 20px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+    .success {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #16a34a;
+    }
+    button {
+      background: #2563EB;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .log {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 14px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+      color: #374151;
+    }
+    .fake-keka {
+      background: #f3f4f6;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .candidate-row {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: white;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    .candidate-row input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    .candidate-name {
+      font-weight: 500;
+      margin-right: 10px;
+    }
+    .email {
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 AI Resume Screener Extension Debug</h1>
+    <p>Use this page to test and debug the browser extension functionality.</p>
+
+    <div id="status" class="status">
+      Checking extension status...
+    </div>
+
+    <div class="test-section">
+      <h3>1. Extension Detection</h3>
+      <button onclick="checkExtension()">Check Extension</button>
+      <button onclick="checkPermissions()">Check Permissions</button>
+      <button onclick="checkStorage()">Check Storage</button>
+      <div id="extension-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>2. Fake Keka Interface</h3>
+      <p>This simulates a Keka candidate list page for testing:</p>
+      
+      <div class="fake-keka">
+        <h4>Job: Senior Frontend Developer</h4>
+        <div id="candidate-list">
+          <div class="candidate-row" data-candidate-id="1">
+            <input type="checkbox" class="candidate-checkbox">
+            <span class="candidate-name">John Doe</span>
+            <span class="email">john.doe@example.com</span>
+          </div>
+          <div class="candidate-row" data-candidate-id="2">
+            <input type="checkbox" class="candidate-checkbox">
+            <span class="candidate-name">Jane Smith</span>
+            <span class="email">jane.smith@example.com</span>
+          </div>
+          <div class="candidate-row" data-candidate-id="3">
+            <input type="checkbox" class="candidate-checkbox">
+            <span class="candidate-name">Bob Johnson</span>
+            <span class="email">bob.johnson@example.com</span>
+          </div>
+        </div>
+      </div>
+      
+      <button onclick="selectAll()">Select All</button>
+      <button onclick="triggerScreening()">Trigger AI Screening</button>
+      <div id="screening-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>3. API Configuration</h3>
+      <button onclick="checkApiKey()">Check API Key</button>
+      <button onclick="setTestApiKey()">Set Test API Key</button>
+      <button onclick="clearApiKey()">Clear API Key</button>
+      <div id="api-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>4. Content Script Communication</h3>
+      <button onclick="sendMessage('getStatus')">Get Status</button>
+      <button onclick="sendMessage('startScreening')">Start Screening</button>
+      <button onclick="injectContentScript()">Inject Content Script</button>
+      <div id="message-log" class="log"></div>
+    </div>
+  </div>
+
+  <script>
+    function log(section, message, type = 'info') {
+      const logEl = document.getElementById(section + '-log');
+      const timestamp = new Date().toLocaleTimeString();
+      const color = type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#374151';
+      logEl.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateStatus(message, type = 'info') {
+      const status = document.getElementById('status');
+      status.className = 'status ' + type;
+      status.textContent = message;
+    }
+
+    async function checkExtension() {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+          log('extension', '✅ Extension detected: ' + chrome.runtime.id, 'success');
+          updateStatus('Extension is loaded and active!', 'success');
+          
+          // Check if content script is injected
+          if (window.kekaAIBridge) {
+            log('extension', '✅ Content script is injected', 'success');
+          } else {
+            log('extension', '⚠️ Content script not detected', 'error');
+          }
+        } else {
+          log('extension', '❌ Extension not detected', 'error');
+          updateStatus('Extension not detected. Please install and reload.', 'error');
+        }
+      } catch (error) {
+        log('extension', '❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    async function checkPermissions() {
+      try {
+        const permissions = await chrome.permissions.getAll();
+        log('extension', 'Permissions: ' + JSON.stringify(permissions, null, 2));
+      } catch (error) {
+        log('extension', '❌ Cannot check permissions: ' + error.message, 'error');
+      }
+    }
+
+    async function checkStorage() {
+      try {
+        const syncData = await chrome.storage.sync.get(null);
+        const localData = await chrome.storage.local.get(null);
+        
+        log('extension', 'Sync Storage: ' + JSON.stringify(syncData, null, 2));
+        log('extension', 'Local Storage: ' + JSON.stringify(localData, null, 2));
+        
+        if (syncData.openaiApiKey) {
+          log('extension', '✅ API Key is configured', 'success');
+        } else {
+          log('extension', '⚠️ API Key not configured', 'error');
+        }
+      } catch (error) {
+        log('extension', '❌ Cannot access storage: ' + error.message, 'error');
+      }
+    }
+
+    async function checkApiKey() {
+      try {
+        const result = await chrome.storage.sync.get(['openaiApiKey']);
+        if (result.openaiApiKey) {
+          log('api', '✅ API Key found: ' + result.openaiApiKey.substring(0, 10) + '...', 'success');
+        } else {
+          log('api', '⚠️ No API Key configured', 'error');
+        }
+      } catch (error) {
+        log('api', '❌ Error checking API key: ' + error.message, 'error');
+      }
+    }
+
+    async function setTestApiKey() {
+      try {
+        const testKey = 'sk-test-' + Math.random().toString(36).substring(7);
+        await chrome.storage.sync.set({ openaiApiKey: testKey });
+        log('api', '✅ Test API key set: ' + testKey, 'success');
+      } catch (error) {
+        log('api', '❌ Error setting API key: ' + error.message, 'error');
+      }
+    }
+
+    async function clearApiKey() {
+      try {
+        await chrome.storage.sync.remove(['openaiApiKey']);
+        log('api', '✅ API key cleared', 'success');
+      } catch (error) {
+        log('api', '❌ Error clearing API key: ' + error.message, 'error');
+      }
+    }
+
+    function selectAll() {
+      const checkboxes = document.querySelectorAll('.candidate-checkbox');
+      checkboxes.forEach(cb => cb.checked = true);
+      log('screening', `Selected ${checkboxes.length} candidates`);
+    }
+
+    function triggerScreening() {
+      const selected = document.querySelectorAll('.candidate-checkbox:checked');
+      log('screening', `Triggering screening for ${selected.length} candidates`);
+      
+      // Simulate the screening process
+      if (window.kekaAIBridge) {
+        window.kekaAIBridge.updateSelectedCandidates();
+        window.kekaAIBridge.startAutonomousScreening();
+      } else {
+        log('screening', '❌ Content script not loaded', 'error');
+      }
+    }
+
+    async function sendMessage(action) {
+      try {
+        const response = await chrome.runtime.sendMessage({ action });
+        log('message', `Response from ${action}: ${JSON.stringify(response)}`, 'success');
+      } catch (error) {
+        log('message', `❌ Error sending message: ${error.message}`, 'error');
+      }
+    }
+
+    async function injectContentScript() {
+      try {
+        // Try to inject the content script manually
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content-ai-bridge.js']
+        });
+        
+        log('message', '✅ Content script injected successfully', 'success');
+        
+        // Reload to see if it worked
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        log('message', `❌ Error injecting script: ${error.message}`, 'error');
+      }
+    }
+
+    // Check extension on load
+    window.addEventListener('load', () => {
+      checkExtension();
+      
+      // Also check if this page URL would match Keka patterns
+      const url = window.location.href;
+      const isKekaLike = url.includes('keka') || url.includes('localhost') || url.includes('debug');
+      
+      if (isKekaLike) {
+        log('extension', '✅ This page matches Keka URL patterns', 'success');
+      } else {
+        log('extension', '⚠️ This page does not match Keka URL patterns', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

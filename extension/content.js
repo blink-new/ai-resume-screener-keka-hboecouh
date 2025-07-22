@@ -577,7 +577,7 @@ CRITICAL: Respond ONLY with valid JSON in this exact format:
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4-turbo-preview', // Using GPT-4 for best quality
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: detailedAnalysis ? 1200 : 800

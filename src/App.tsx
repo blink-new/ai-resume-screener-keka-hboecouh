@@ -8,6 +8,7 @@ import { Results } from '@/pages/Results'
 import Analytics from '@/pages/Analytics'
 import { Candidates } from '@/pages/Candidates'
 import { Settings } from '@/pages/Settings'
+import Demo from '@/pages/Demo'
 import { blink } from '@/blink/client'
 
 function App() {
@@ -74,6 +75,8 @@ function App() {
         return <Candidates />
       case 'settings':
         return <Settings />
+      case 'demo':
+        return <Demo />
       default:
         return <Dashboard onNavigate={setActiveTab} />
     }

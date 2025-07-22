@@ -1,414 +1,401 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { Progress } from '../components/ui/progress'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Alert, AlertDescription } from '../components/ui/alert'
 import { 
+  BarChart3, 
   TrendingUp, 
-  TrendingDown,
   Users, 
-  FileText, 
+  Target, 
+  AlertTriangle, 
+  CheckCircle,
   Clock,
-  Target,
-  Award,
-  BarChart3,
-  PieChart,
-  Calendar,
-  Download
+  Brain,
+  Zap,
+  Shield
 } from 'lucide-react'
+import { AIResumeAgent } from '../services/AIResumeAgent'
+import { WorkflowAutomation } from '../services/WorkflowAutomation'
+import type { PerformanceMetrics, BiasReport } from '../types/resume'
 
-export function Analytics() {
-  const [timeRange, setTimeRange] = useState('7d')
+export default function Analytics() {
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null)
+  const [biasReport, setBiasReport] = useState<BiasReport | null>(null)
+  const [automationRules, setAutomationRules] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const metrics = {
-    totalProcessed: 12847,
-    qualifiedCandidates: 3892,
-    averageScore: 76.4,
-    processingTime: 2.1,
-    successRate: 94.2,
-    exportedToKeka: 1247
+  const aiAgent = new AIResumeAgent()
+  const workflowAutomation = new WorkflowAutomation()
+
+  const loadAnalyticsData = async () => {
+    try {
+      setLoading(true)
+      
+      const [metrics, bias, rules] = await Promise.all([
+        aiAgent.getPerformanceMetrics(),
+        aiAgent.getBiasReport(),
+        workflowAutomation.getAutomationRules()
+      ])
+      
+      setPerformanceMetrics(metrics)
+      setBiasReport(bias)
+      setAutomationRules(rules)
+    } catch (error) {
+      console.error('Error loading analytics data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const trends = {
-    processed: { value: 23, isPositive: true },
-    qualified: { value: 18, isPositive: true },
-    score: { value: 5.2, isPositive: true },
-    time: { value: 12, isPositive: false }
+  useEffect(() => {
+    loadAnalyticsData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const toggleAutomationRule = async (ruleId: string, isActive: boolean) => {
+    try {
+      await workflowAutomation.toggleAutomationRule(ruleId, isActive)
+      await loadAnalyticsData()
+    } catch (error) {
+      console.error('Error toggling automation rule:', error)
+    }
   }
 
-  const skillsAnalysis = [
-    { skill: 'JavaScript', demand: 89, supply: 67, gap: 22 },
-    { skill: 'Python', demand: 82, supply: 71, gap: 11 },
-    { skill: 'React', demand: 78, supply: 59, gap: 19 },
-    { skill: 'AWS', demand: 75, supply: 43, gap: 32 },
-    { skill: 'Node.js', demand: 71, supply: 52, gap: 19 },
-    { skill: 'Docker', demand: 68, supply: 38, gap: 30 },
-    { skill: 'Kubernetes', demand: 65, supply: 29, gap: 36 },
-    { skill: 'TypeScript', demand: 62, supply: 45, gap: 17 }
-  ]
-
-  const processingStats = [
-    { date: '2024-01-14', processed: 234, qualified: 89, exported: 67 },
-    { date: '2024-01-15', processed: 189, qualified: 72, exported: 54 },
-    { date: '2024-01-16', processed: 312, qualified: 118, exported: 89 },
-    { date: '2024-01-17', processed: 267, qualified: 95, exported: 71 },
-    { date: '2024-01-18', processed: 298, qualified: 112, exported: 84 },
-    { date: '2024-01-19', processed: 345, qualified: 134, exported: 98 },
-    { date: '2024-01-20', processed: 278, qualified: 106, exported: 79 }
-  ]
-
-  const scoreDistribution = [
-    { range: '90-100', count: 892, percentage: 23 },
-    { range: '80-89', count: 1456, percentage: 38 },
-    { range: '70-79', count: 1123, percentage: 29 },
-    { range: '60-69', count: 298, percentage: 8 },
-    { range: '50-59', count: 78, percentage: 2 }
-  ]
-
-  const departmentBreakdown = [
-    { department: 'Engineering', candidates: 2847, qualified: 1234, rate: 43.3 },
-    { department: 'Product', candidates: 892, qualified: 456, rate: 51.1 },
-    { department: 'Design', candidates: 567, qualified: 234, rate: 41.3 },
-    { department: 'Marketing', candidates: 445, qualified: 189, rate: 42.5 },
-    { department: 'Sales', candidates: 334, qualified: 167, rate: 50.0 }
-  ]
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading analytics...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Comprehensive insights into your resume screening performance
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">AI Analytics Dashboard</h1>
+          <p className="text-gray-600 mt-2">Monitor AI performance, bias detection, and automation workflows</p>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            {['7d', '30d', '90d'].map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeRange(range)}
-                className="text-xs"
-              >
-                {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
-              </Button>
-            ))}
+        <Button onClick={loadAnalyticsData} variant="outline">
+          <TrendingUp className="w-4 h-4 mr-2" />
+          Refresh Data
+        </Button>
+      </div>
+
+      <Tabs defaultValue="performance" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="bias">Bias Detection</TabsTrigger>
+          <TabsTrigger value="automation">Automation</TabsTrigger>
+          <TabsTrigger value="insights">AI Insights</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Screened</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performanceMetrics?.totalScreened || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  +12% from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Accuracy Rate</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {Math.round((performanceMetrics?.accuracyRate || 0) * 100)}%
+                </div>
+                <Progress value={(performanceMetrics?.accuracyRate || 0) * 100} className="mt-2" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Hiring Success</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {Math.round((performanceMetrics?.hiringSuccessRate || 0) * 100)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  +5% improvement
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Avg Processing</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceMetrics?.avgProcessingTime || 0}s
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Per candidate
+                </p>
+              </CardContent>
+            </Card>
           </div>
-          
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-        </div>
-      </div>
 
-      {/* Key Metrics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Processed</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.totalProcessed.toLocaleString()}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">+{trends.processed.value}%</span>
-                  <span className="text-sm text-gray-500 ml-1">vs last period</span>
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Trends</CardTitle>
+              <CardDescription>AI screening performance over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Screening Accuracy</span>
+                  <span className="text-sm text-gray-600">93%</span>
                 </div>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Qualified Candidates</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.qualifiedCandidates.toLocaleString()}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">+{trends.qualified.value}%</span>
-                  <span className="text-sm text-gray-500 ml-1">vs last period</span>
+                <Progress value={93} />
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Job Match Precision</span>
+                  <span className="text-sm text-gray-600">87%</span>
                 </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Users className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.averageScore}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">+{trends.score.value}%</span>
-                  <span className="text-sm text-gray-500 ml-1">vs last period</span>
+                <Progress value={87} />
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">False Positive Rate</span>
+                  <span className="text-sm text-gray-600">8%</span>
                 </div>
+                <Progress value={8} className="[&>div]:bg-red-500" />
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Award className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Avg Processing Time</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.processingTime}s</p>
-                <div className="flex items-center mt-2">
-                  <TrendingDown className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">-{trends.time.value}%</span>
-                  <span className="text-sm text-gray-500 ml-1">faster</span>
+        <TabsContent value="bias" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Bias Detection Overview
+                </CardTitle>
+                <CardDescription>AI fairness and bias monitoring</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Overall Bias Score</span>
+                  <Badge variant={biasReport && biasReport.overallBiasScore < 0.2 ? "default" : "destructive"}>
+                    {Math.round((biasReport?.overallBiasScore || 0) * 100)}%
+                  </Badge>
                 </div>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <Clock className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.successRate}%</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">+2.1%</span>
-                  <span className="text-sm text-gray-500 ml-1">vs last period</span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Target className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Exported to Keka</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics.exportedToKeka.toLocaleString()}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-sm text-green-600">+15%</span>
-                  <span className="text-sm text-gray-500 ml-1">vs last period</span>
-                </div>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <BarChart3 className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts and Analysis */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Skills Gap Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              Skills Gap Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {skillsAnalysis.map((skill, index) => (
-                <div key={index} className="space-y-2">
+                
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{skill.skill}</span>
-                    <Badge variant={skill.gap > 25 ? 'destructive' : skill.gap > 15 ? 'secondary' : 'default'}>
-                      {skill.gap}% gap
-                    </Badge>
+                    <span className="text-sm">Gender Bias</span>
+                    <span className="text-sm">{Math.round((biasReport?.genderBias || 0) * 100)}%</span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Demand: {skill.demand}%</span>
-                      <span>Supply: {skill.supply}%</span>
-                    </div>
-                    <div className="relative">
-                      <Progress value={skill.demand} className="h-2" />
-                      <Progress 
-                        value={skill.supply} 
-                        className="h-2 absolute top-0 opacity-60" 
-                      />
-                    </div>
+                  <Progress value={(biasReport?.genderBias || 0) * 100} />
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Age Bias</span>
+                    <span className="text-sm">{Math.round((biasReport?.ageBias || 0) * 100)}%</span>
                   </div>
+                  <Progress value={(biasReport?.ageBias || 0) * 100} />
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Education Bias</span>
+                    <span className="text-sm">{Math.round((biasReport?.educationBias || 0) * 100)}%</span>
+                  </div>
+                  <Progress value={(biasReport?.educationBias || 0) * 100} />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Score Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-green-600" />
-              Score Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {scoreDistribution.map((range, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full ${
-                      index === 0 ? 'bg-green-500' :
-                      index === 1 ? 'bg-blue-500' :
-                      index === 2 ? 'bg-yellow-500' :
-                      index === 3 ? 'bg-orange-500' : 'bg-red-500'
-                    }`} />
-                    <span className="font-medium">{range.range}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32">
-                      <Progress value={range.percentage} className="h-2" />
-                    </div>
-                    <span className="text-sm text-gray-600 w-16">{range.count}</span>
-                    <span className="text-sm text-gray-500 w-12">{range.percentage}%</span>
-                  </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Bias Mitigation Recommendations</CardTitle>
+                <CardDescription>AI-generated suggestions to reduce bias</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {biasReport?.recommendations.map((recommendation, index) => (
+                    <Alert key={index}>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>{recommendation}</AlertDescription>
+                    </Alert>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Processing Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-purple-600" />
-              Processing Trends (Last 7 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {processingStats.map((stat, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium">
-                      {new Date(stat.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
+                
+                <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-800">
+                      {biasReport?.flaggedDecisions || 0} decisions flagged for review
                     </span>
                   </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <div className="font-medium text-blue-600">{stat.processed}</div>
-                      <div className="text-gray-500">Processed</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-green-600">{stat.qualified}</div>
-                      <div className="text-gray-500">Qualified</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-purple-600">{stat.exported}</div>
-                      <div className="text-gray-500">Exported</div>
-                    </div>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Department Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-orange-600" />
-              Department Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {departmentBreakdown.map((dept, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{dept.department}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">
-                        {dept.qualified}/{dept.candidates}
-                      </span>
-                      <Badge variant={dept.rate > 45 ? 'default' : 'secondary'}>
-                        {dept.rate}%
-                      </Badge>
-                    </div>
-                  </div>
-                  <Progress value={dept.rate} className="h-2" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Insights and Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Insights & Recommendations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">🎯 Skill Gap Alert</h4>
-              <p className="text-sm text-blue-800">
-                High demand for Kubernetes and AWS skills with low candidate supply. 
-                Consider expanding search criteria or offering training programs.
-              </p>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">📈 Performance Boost</h4>
-              <p className="text-sm text-green-800">
-                Processing efficiency improved by 12% this week. The AI model is 
-                getting better at identifying qualified candidates.
-              </p>
-            </div>
-            
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <h4 className="font-semibold text-yellow-900 mb-2">⚡ Quick Win</h4>
-              <p className="text-sm text-yellow-800">
-                892 high-scoring candidates (90+) are ready for immediate export to Keka. 
-                This could fill 15-20 open positions.
-              </p>
-            </div>
-            
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2">🔄 Process Optimization</h4>
-              <p className="text-sm text-purple-800">
-                Product department shows highest qualification rate (51.1%). 
-                Apply similar screening criteria to other departments.
-              </p>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="automation" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Automation Rules
+              </CardTitle>
+              <CardDescription>Manage workflow automation rules</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {automationRules.map((rule) => (
+                  <div key={rule.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{rule.name}</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Trigger: {rule.trigger} • {rule.conditions.length} conditions • {rule.actions.length} actions
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={rule.isActive ? "default" : "secondary"}>
+                        {rule.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleAutomationRule(rule.id, !rule.isActive)}
+                      >
+                        {rule.isActive ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Auto-Interviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">24</div>
+                <p className="text-sm text-gray-600">Scheduled this week</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Auto-Rejections</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">156</div>
+                <p className="text-sm text-gray-600">Processed this week</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Manual Reviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">43</div>
+                <p className="text-sm text-gray-600">Pending review</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                AI Learning Insights
+              </CardTitle>
+              <CardDescription>How the AI is improving over time</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium">Top Predictive Factors</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Technical Skills Match</span>
+                      <span className="text-sm font-medium">87%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Experience Level</span>
+                      <span className="text-sm font-medium">76%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Education Background</span>
+                      <span className="text-sm font-medium">64%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Previous Company Size</span>
+                      <span className="text-sm font-medium">52%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Learning Progress</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">Model Accuracy</span>
+                        <span className="text-sm">93%</span>
+                      </div>
+                      <Progress value={93} />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">Prediction Confidence</span>
+                        <span className="text-sm">89%</span>
+                      </div>
+                      <Progress value={89} />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">Learning Rate</span>
+                        <span className="text-sm">+12%</span>
+                      </div>
+                      <Progress value={78} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Alert>
+                <Brain className="h-4 w-4" />
+                <AlertDescription>
+                  The AI has processed 2,847 candidates and is continuously learning from hiring outcomes. 
+                  Current model shows 93% accuracy in predicting successful hires.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

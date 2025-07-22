@@ -53,11 +53,13 @@ class PopupController {
     const stats = await chrome.storage.local.get([
       `screened_${today}`,
       'totalScreened',
-      'avgScore'
+      'avgScore',
+      'intakeDocuments'
     ]);
 
     this.stats.screenedToday = stats[`screened_${today}`] || 0;
     this.stats.avgScore = stats.avgScore || 0;
+    this.intakeDocuments = stats.intakeDocuments || [];
 
     // Update UI
     document.getElementById('screened-today').textContent = this.stats.screenedToday;
@@ -86,6 +88,10 @@ class PopupController {
 
     document.getElementById('upload-intake').addEventListener('click', () => {
       this.uploadIntakeDocument();
+    });
+
+    document.getElementById('manage-intake').addEventListener('click', () => {
+      this.showIntakeManagementModal();
     });
 
     document.getElementById('open-dashboard').addEventListener('click', () => {
@@ -523,6 +529,127 @@ class PopupController {
     document.body.appendChild(error);
     
     setTimeout(() => error.remove(), 3000);
+  }
+
+  showIntakeManagementModal() {
+    // Create intake documents management modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    `;
+    
+    const intakeDocsHtml = this.intakeDocuments.length > 0 
+      ? this.intakeDocuments.map((doc, index) => `
+          <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1F2937;">
+                  ${doc.jobTitle}
+                </h4>
+                <p style="margin: 0; font-size: 12px; color: #6B7280;">
+                  ${doc.department} • ${doc.fileName || 'Manual Entry'}
+                </p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #9CA3AF;">
+                  Created: ${new Date(doc.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="intake-toggle" data-index="${index}" 
+                        style="padding: 4px 8px; font-size: 12px; border: 1px solid ${doc.isActive ? '#10B981' : '#D1D5DB'}; 
+                               background: ${doc.isActive ? '#10B981' : 'white'}; color: ${doc.isActive ? 'white' : '#6B7280'}; 
+                               border-radius: 4px; cursor: pointer;">
+                  ${doc.isActive ? 'Active' : 'Inactive'}
+                </button>
+                <button class="intake-delete" data-index="${index}" 
+                        style="padding: 4px 8px; font-size: 12px; border: 1px solid #EF4444; 
+                               background: white; color: #EF4444; border-radius: 4px; cursor: pointer;">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('')
+      : '<p style="text-align: center; color: #6B7280; font-size: 14px;">No intake documents uploaded yet.</p>';
+    
+    modal.innerHTML = `
+      <div style="background: white; padding: 24px; border-radius: 12px; width: 500px; max-width: 90vw; color: #333; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; color: #2563EB;">📋 Manage Intake Documents</h3>
+          <button id="close-intake-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6B7280;">&times;</button>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <p style="margin-bottom: 12px; color: #6B7280; font-size: 14px;">
+            Intake documents help the AI better understand job requirements and match candidates more accurately.
+          </p>
+          
+          <div id="intake-docs-list">
+            ${intakeDocsHtml}
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #E5E7EB;">
+          <button id="add-new-intake" style="padding: 8px 16px; background: #2563EB; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+            + Add New Document
+          </button>
+          <button id="close-intake-btn" style="padding: 8px 16px; border: 1px solid #D1D5DB; background: white; border-radius: 6px; cursor: pointer; font-size: 14px;">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    modal.querySelector('#close-intake-modal').addEventListener('click', () => modal.remove());
+    modal.querySelector('#close-intake-btn').addEventListener('click', () => modal.remove());
+    
+    modal.querySelector('#add-new-intake').addEventListener('click', () => {
+      modal.remove();
+      this.showIntakeUploadModal();
+    });
+    
+    // Toggle active status
+    modal.querySelectorAll('.intake-toggle').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const index = parseInt(e.target.dataset.index);
+        this.intakeDocuments[index].isActive = !this.intakeDocuments[index].isActive;
+        
+        // If activating this one, deactivate others
+        if (this.intakeDocuments[index].isActive) {
+          this.intakeDocuments.forEach((doc, i) => {
+            if (i !== index) doc.isActive = false;
+          });
+        }
+        
+        await chrome.storage.local.set({ intakeDocuments: this.intakeDocuments });
+        modal.remove();
+        this.showIntakeManagementModal(); // Refresh the modal
+      });
+    });
+    
+    // Delete document
+    modal.querySelectorAll('.intake-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        if (confirm('Are you sure you want to delete this intake document?')) {
+          const index = parseInt(e.target.dataset.index);
+          this.intakeDocuments.splice(index, 1);
+          await chrome.storage.local.set({ intakeDocuments: this.intakeDocuments });
+          modal.remove();
+          this.showIntakeManagementModal(); // Refresh the modal
+        }
+      });
+    });
   }
 }
 

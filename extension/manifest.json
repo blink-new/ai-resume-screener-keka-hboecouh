@@ -19,7 +19,7 @@
         "https://*.keka.com/*",
         "https://*.kekacloud.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["content-ai-bridge.js"],
       "css": ["styles.css"]
     }
   ],
